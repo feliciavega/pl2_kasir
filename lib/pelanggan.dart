@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class Pelanggan extends StatefulWidget {
   @override
@@ -39,6 +40,7 @@ class _PelangganState extends State<Pelanggan> {
 
   // Fungsi untuk menambah pelanggan
   Future<void> _tambahPelanggan(BuildContext context) async {
+    final _formKey = GlobalKey<FormState>();
     TextEditingController nameController = TextEditingController();
     TextEditingController alamatController = TextEditingController();
     TextEditingController noTelpController = TextEditingController();
@@ -53,70 +55,101 @@ class _PelangganState extends State<Pelanggan> {
             'Tambah Pelanggan',
             style: TextStyle(fontWeight: FontWeight.bold),
           ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: nameController,
-                decoration: InputDecoration(
-                  labelText: 'Nama Pelanggan',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
+          content: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  controller: nameController,
+                  decoration: InputDecoration(
+                    labelText: 'Nama Pelanggan',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Nama pelanggan tidak boleh kosong';
+                    }
+                    return null;
+                  },
                 ),
-              ),
-              const SizedBox(height: 10),
-              TextField(
-                controller: alamatController,
-                decoration: InputDecoration(
-                  labelText: 'Alamat',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
+                const SizedBox(height: 10),
+                TextFormField(
+                  controller: alamatController,
+                  decoration: InputDecoration(
+                    labelText: 'Alamat',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Alamat tidak boleh kosong';
+                    }
+                    return null;
+                  },
                 ),
-              ),
-              const SizedBox(height: 10),
-              TextField(
-                controller: noTelpController,
-                keyboardType: TextInputType.phone,
-                decoration: InputDecoration(
-                  labelText: 'No Telp',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
+                const SizedBox(height: 10),
+                TextFormField(
+                  controller: noTelpController,
+                  keyboardType: TextInputType.phone,
+                  decoration: InputDecoration(
+                    labelText: 'No Telp',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Nomor telepon tidak boleh kosong';
+                    } else if (!RegExp(r'^\+?[0-9]{10,12}$').hasMatch(value)) {
+                      return 'Nomor telepon tidak valid';
+                    }
+                    return null;
+                  },
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
           actions: [
-            TextButton(
+            ElevatedButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Batal', style: TextStyle(color: Colors.red)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red, // Warna latar belakang merah untuk tombol batal
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20), // Membuat tombol lebih bulat
+                ),
+              ),
+              child: const Text('Batal', style: TextStyle(color: Colors.white)),
             ),
             ElevatedButton(
               onPressed: () async {
-                final name = nameController.text.trim();
-                final alamat = alamatController.text.trim();
-                final noTelp = noTelpController.text.trim();
+                if (_formKey.currentState!.validate()) {
+                  final name = nameController.text.trim();
+                  final alamat = alamatController.text.trim();
+                  final noTelp = noTelpController.text.trim();
 
-                try {
-                  await Supabase.instance.client.from('pelanggan').insert({
-                    'nama_pelanggan': name,
-                    'alamat': alamat,
-                    'no_telp': noTelp,
-                  });
+                  try {
+                    await Supabase.instance.client.from('pelanggan').insert({
+                      'nama_pelanggan': name,
+                      'alamat': alamat,
+                      'no_telp': noTelp,
+                    });
 
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Pelanggan berhasil ditambahkan'),
-                    ),
-                  );
-                  _fetchPelanggan();
-                  Navigator.pop(context);
-                } catch (e) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Kesalahan: $e')),
-                  );
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Pelanggan berhasil ditambahkan'),
+                      ),
+                    );
+                    _fetchPelanggan();
+                    Navigator.pop(context);
+                  } catch (e) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Kesalahan: $e')),
+                    );
+                  }
                 }
               },
               child: const Text('Tambah'),
@@ -129,6 +162,7 @@ class _PelangganState extends State<Pelanggan> {
 
   // Fungsi untuk mengedit pelanggan
   Future<void> _editPelanggan(BuildContext context, Map<String, dynamic> pelanggan) async {
+    final _formKey = GlobalKey<FormState>();
     TextEditingController nameController =
         TextEditingController(text: pelanggan['name']);
     TextEditingController alamatController =
@@ -146,72 +180,103 @@ class _PelangganState extends State<Pelanggan> {
             'Edit Pelanggan',
             style: TextStyle(fontWeight: FontWeight.bold),
           ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: nameController,
-                decoration: InputDecoration(
-                  labelText: 'Nama Pelanggan',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
+          content: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  controller: nameController,
+                  decoration: InputDecoration(
+                    labelText: 'Nama Pelanggan',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Nama pelanggan tidak boleh kosong';
+                    }
+                    return null;
+                  },
                 ),
-              ),
-              const SizedBox(height: 10),
-              TextField(
-                controller: alamatController,
-                decoration: InputDecoration(
-                  labelText: 'Alamat',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
+                const SizedBox(height: 10),
+                TextFormField(
+                  controller: alamatController,
+                  decoration: InputDecoration(
+                    labelText: 'Alamat',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Alamat tidak boleh kosong';
+                    }
+                    return null;
+                  },
                 ),
-              ),
-              const SizedBox(height: 10),
-              TextField(
-                controller: noTelpController,
-                keyboardType: TextInputType.phone,
-                decoration: InputDecoration(
-                  labelText: 'No Telp',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
+                const SizedBox(height: 10),
+                TextFormField(
+                  controller: noTelpController,
+                  keyboardType: TextInputType.phone,
+                  decoration: InputDecoration(
+                    labelText: 'No Telp',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Nomor telepon tidak boleh kosong';
+                    } else if (!RegExp(r'^\+?[0-9]{10,12}$').hasMatch(value)) {
+                      return 'Nomor telepon tidak valid';
+                    }
+                    return null;
+                  },
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
           actions: [
-            TextButton(
+            ElevatedButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Batal', style: TextStyle(color: Colors.red)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red, // Warna latar belakang merah untuk tombol batal
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20), // Membuat tombol lebih bulat
+                ),
+              ),
+              child: const Text('Batal', style: TextStyle(color: Colors.white)),
             ),
             ElevatedButton(
               onPressed: () async {
-                final name = nameController.text.trim();
-                final alamat = alamatController.text.trim();
-                final noTelp = noTelpController.text.trim();
+                if (_formKey.currentState!.validate()) {
+                  final name = nameController.text.trim();
+                  final alamat = alamatController.text.trim();
+                  final noTelp = noTelpController.text.trim();
 
-                try {
-                  await Supabase.instance.client
-                      .from('pelanggan')
-                      .update({
-                    'nama_pelanggan': name,
-                    'alamat': alamat,
-                    'no_telp': noTelp,
-                  }).match({'id_pelanggan': pelanggan['id_pelanggan']});
+                  try {
+                    await Supabase.instance.client
+                        .from('pelanggan')
+                        .update({
+                      'nama_pelanggan': name,
+                      'alamat': alamat,
+                      'no_telp': noTelp,
+                    }).match({'id_pelanggan': pelanggan['id_pelanggan']});
 
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Pelanggan berhasil diperbarui'),
-                    ),
-                  );
-                  _fetchPelanggan();
-                  Navigator.pop(context);
-                } catch (e) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Kesalahan: $e')),
-                  );
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Pelanggan berhasil diperbarui'),
+                      ),
+                    );
+                    _fetchPelanggan();
+                    Navigator.pop(context);
+                  } catch (e) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Kesalahan: $e')),
+                    );
+                  }
                 }
               },
               child: const Text('Simpan'),
@@ -235,10 +300,16 @@ class _PelangganState extends State<Pelanggan> {
             style: TextStyle(fontWeight: FontWeight.bold),
           ),
           content: const Text('Apakah Anda yakin ingin menghapus pelanggan ini?'),
-          actions: [
-            TextButton(
+           actions: [
+            ElevatedButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Batal', style: TextStyle(color: Colors.red)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red, // Warna latar belakang merah untuk tombol batal
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20), // Membuat tombol lebih bulat
+                ),
+              ),
+              child: const Text('Batal', style: TextStyle(color: Colors.white)),
             ),
             ElevatedButton(
               onPressed: () async {
@@ -271,60 +342,56 @@ class _PelangganState extends State<Pelanggan> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Manajemen Pelanggan'),
-        backgroundColor: const Color.fromARGB(255, 214, 57, 91),
+        title: const Text('Pelanggan'),
+        backgroundColor: Colors.blue,
+        actions: [
+          IconButton(
+            onPressed: () {
+              _tambahPelanggan(context);
+            },
+            icon: const Icon(Icons.add),
+          ),
+        ],
+        leading: IconButton(
+          onPressed: () => Navigator.pop(context),
+          icon: const Icon(Icons.arrow_back),
+          color: Colors.white, // Ubah warna back button menjadi putih
+        ),
       ),
       body: pelangganList.isEmpty
-          ? const Center(
-              child: Text(
-                'Tidak ada pelanggan',
-                style: TextStyle(fontSize: 18, color: Colors.grey),
-              ),
-            )
+          ? const Center(child: CircularProgressIndicator())
           : ListView.builder(
               itemCount: pelangganList.length,
               itemBuilder: (context, index) {
                 final pelanggan = pelangganList[index];
-                return Card(
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15)),
-                  elevation: 4,
-                  margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  child: ListTile(
-                    title: Text(
-                      pelanggan['name'],
-                      style: const TextStyle(
-                          fontSize: 16, fontWeight: FontWeight.bold),
-                    ),
-                    subtitle: Text(
-                      '${pelanggan['alamat']}\n${pelanggan['no_telp']}',
-                      style: const TextStyle(fontSize: 14),
-                    ),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.edit, color: Colors.blue),
-                          onPressed: () =>
-                              _editPelanggan(context, pelanggan),
+                return ListTile(
+                  title: Text(pelanggan['name'],
+                      style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+                  subtitle: Text('Alamat: ${pelanggan['alamat']}\nNo Telp: ${pelanggan['no_telp']}'),
+                  trailing: PopupMenuButton(
+                    onSelected: (value) {
+                      if (value == 'edit') {
+                        _editPelanggan(context, pelanggan);
+                      } else if (value == 'delete') {
+                        _hapusPelanggan(pelanggan['id_pelanggan']);
+                      }
+                    },
+                    itemBuilder: (context) {
+                      return [
+                        const PopupMenuItem(
+                          value: 'edit',
+                          child: Text('Edit'),
                         ),
-                        IconButton(
-                          icon:
-                              const Icon(Icons.delete, color: Colors.red),
-                          onPressed: () =>
-                              _hapusPelanggan(pelanggan['id_pelanggan']),
+                        const PopupMenuItem(
+                          value: 'delete',
+                          child: Text('Delete'),
                         ),
-                      ],
-                    ),
+                      ];
+                    },
                   ),
                 );
               },
             ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: const Color(0xFFF10034),
-        onPressed: () => _tambahPelanggan(context),
-        child: const Icon(Icons.add, color: Colors.white),
-      ),
     );
   }
 }

@@ -1,21 +1,27 @@
-import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:pl2_kasir/admin_dashboard.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter/material.dart'; 
+import 'package:supabase_flutter/supabase_flutter.dart'; 
+import 'package:pl2_kasir/dashboard.dart'; 
+import 'package:shared_preferences/shared_preferences.dart'; 
+import 'package:google_fonts/google_fonts.dart'; 
 
+// Kelas Login yang merupakan StatefulWidget
 class Login extends StatefulWidget {
   @override
   _LoginState createState() => _LoginState();
 }
 
+// State dari kelas Login
 class _LoginState extends State<Login> {
+  // Controller untuk input username dan password
   final TextEditingController usernameController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
+  // Fungsi untuk melakukan proses login
   Future<void> login(BuildContext context) async {
-    final String username = usernameController.text.trim();
-    final String password = passwordController.text.trim();
+    final String username = usernameController.text.trim(); // Ambil teks dari input username
+    final String password = passwordController.text.trim(); // Ambil teks dari input password
 
+    // Validasi jika username atau password kosong
     if (username.isEmpty || password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Username dan password tidak boleh kosong')),
@@ -24,25 +30,36 @@ class _LoginState extends State<Login> {
     }
 
     try {
+      // Query ke Supabase untuk mencari user dengan username dan password yang sesuai
       final response = await Supabase.instance.client
           .from('user')
           .select()
           .eq('username', username)
-          .eq('password', password);
+          .eq('password', password)
+          .single();
 
-      if (response.isEmpty) {
-        // Tidak ada data, login gagal
+      // Jika tidak ada data yang cocok, login gagal
+      if (response == null || response.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Username atau password salah')),
         );
       } else {
-        // Login berhasil
+        // Ambil role dari response
+        String role = response['role'];
+
+        // Simpan username dan role ke SharedPreferences
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('userName', username);
+        await prefs.setString('role', role);
+
+        // Login berhasil, navigasikan ke Dashboard
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => AdminDashboard()),
+          MaterialPageRoute(builder: (context) => Dashboard()),
         );
       }
     } catch (error) {
+      // Tangani error jika terjadi kesalahan saat login
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Terjadi kesalahan: $error')),
       );
@@ -52,10 +69,10 @@ class _LoginState extends State<Login> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xffffffff),
+      backgroundColor: Color(0xffffffff), // Warna latar belakang putih
       body: Center(
         child: Padding(
-          padding: EdgeInsets.fromLTRB(16, 50, 16, 16),
+          padding: EdgeInsets.fromLTRB(16, 50, 16, 16), // Padding di sekitar halaman
           child: SingleChildScrollView(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -65,11 +82,13 @@ class _LoginState extends State<Login> {
                 Center(
                   child: Column(
                     children: [
+                      // Ikon user
                       Icon(
                         Icons.account_circle,
                         size: 90,
                         color: Color.fromARGB(255, 212, 126, 166),
                       ),
+                      // Teks "Login dulu"
                       Padding(
                         padding: EdgeInsets.fromLTRB(0, 8, 0, 30),
                         child: Text(
@@ -85,6 +104,7 @@ class _LoginState extends State<Login> {
                     ],
                   ),
                 ),
+                // Input Username
                 Padding(
                   padding: EdgeInsets.fromLTRB(0, 30, 0, 16),
                   child: TextField(
@@ -114,6 +134,7 @@ class _LoginState extends State<Login> {
                     ),
                   ),
                 ),
+                // Input Password
                 Padding(
                   padding: EdgeInsets.fromLTRB(0, 0, 0, 16),
                   child: TextField(
@@ -143,10 +164,11 @@ class _LoginState extends State<Login> {
                     ),
                   ),
                 ),
+                // Tombol Login
                 Padding(
                   padding: EdgeInsets.fromLTRB(0, 30, 0, 16),
                   child: MaterialButton(
-                    onPressed: () => login(context),
+                    onPressed: () => login(context), // Panggil fungsi login saat ditekan
                     color: Color.fromARGB(255, 255, 91, 145),
                     elevation: 0,
                     shape: RoundedRectangleBorder(
